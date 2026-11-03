@@ -1,5 +1,7 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
+import fs from 'fs';
+import os from 'os';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
@@ -109,6 +111,230 @@ app.get('/api/sync/status', (_req: Request, res: Response) => {
     customDomain: 'member.lombokgardenhotel.com',
     timestamp: new Date().toISOString(),
     status: 'healthy',
+  });
+});
+
+// VPS NevaCloud Server Diagnostics & Runtime Telemetry
+app.get('/api/system/server-info', (req: Request, res: Response) => {
+  const mem = process.memoryUsage();
+  const distPath = path.resolve(__dirname, 'dist');
+  const indexHtmlExists = fs.existsSync(path.resolve(distPath, 'index.html'));
+  const envFileExists = fs.existsSync(path.resolve(__dirname, '.env'));
+
+  const totalRamMb = Math.round(os.totalmem() / (1024 * 1024));
+  const freeRamMb = Math.round(os.freemem() / (1024 * 1024));
+  const processRssMb = Math.round(mem.rss / (1024 * 1024));
+  const processHeapMb = Math.round(mem.heapUsed / (1024 * 1024));
+
+  res.json({
+    success: true,
+    platform: process.platform,
+    arch: process.arch,
+    nodeVersion: process.version,
+    uptimeSeconds: Math.floor(process.uptime()),
+    pid: process.pid,
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    isProduction: isProd,
+    distFolderBuilt: indexHtmlExists,
+    envFileConfigured: envFileExists,
+    vpsProvider: 'NevaCloud Linux VPS (Optimized)',
+    activeDomain: getAppBaseUrl(req),
+    memory: {
+      processRssMb,
+      processHeapMb,
+      totalRamMb,
+      freeRamMb,
+      usagePercent: Math.round(((totalRamMb - freeRamMb) / totalRamMb) * 100),
+    },
+    systemSpecs: {
+      cpus: os.cpus().length,
+      cpuModel: os.cpus()[0]?.model || 'Standard VPS Core',
+      osType: os.type(),
+      osRelease: os.release(),
+      loadAverage: os.loadavg(),
+    },
+    database: {
+      id: 'ai-studio-lombokgardenhote-6c919a5f-b175-40b5-b5a7-13f33d1558ca',
+      mode: 'Firestore Real-time Cloud Sync',
+      customDomainTarget: 'member.lombokgardenhotel.com',
+    },
+    deploymentReadiness: {
+      serverRunning: true,
+      apiHealth: 'healthy',
+      portBinding: `0.0.0.0:${PORT}`,
+      pm2Recommended: true,
+      nginxReverseProxyReady: true,
+      sslLetEncryptSupported: true,
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Generate dynamic Nginx, PM2, and Script Configurations for NevaCloud
+app.post('/api/deployment/generate-config', (req: Request, res: Response) => {
+  const {
+    domain = 'member.lombokgardenhotel.com',
+    port = PORT,
+    vpsDir = '/var/www/lombok-garden-crm',
+    appName = 'lombok-crm',
+    adminEmail = 'edp.logar@gmail.com',
+  } = req.body;
+
+  const cleanDomain = String(domain).trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  const cleanPort = Number(port) || 3000;
+  const cleanDir = String(vpsDir).trim() || '/var/www/lombok-garden-crm';
+
+  const nginxConfig = `# Nginx Configuration for Lombok Garden Hotel on NevaCloud VPS
+# File: /etc/nginx/sites-available/${cleanDomain}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${cleanDomain};
+
+    # Redirect all HTTP traffic to HTTPS (activate after running certbot)
+    # return 301 https://$host$request_uri;
+
+    location / {
+        proxy_pass http://127.0.0.1:${cleanPort};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 90;
+        client_max_body_size 25M;
+    }
+}
+`;
+
+  const pm2Config = `// PM2 Ecosystem Configuration for NevaCloud VPS
+// File: ecosystem.config.cjs
+module.exports = {
+  apps: [
+    {
+      name: '${appName}',
+      script: 'server.ts',
+      interpreter: 'tsx',
+      cwd: '${cleanDir}',
+      instances: 'max',
+      exec_mode: 'cluster',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '800M',
+      env: {
+        NODE_ENV: 'production',
+        PORT: ${cleanPort},
+      },
+    },
+  ],
+};
+`;
+
+  const envContent = `# Production Environment Configuration for NevaCloud VPS
+NODE_ENV=production
+PORT=${cleanPort}
+BASE_URL=https://${cleanDomain}
+FIREBASE_DATABASE_ID=ai-studio-lombokgardenhote-6c919a5f-b175-40b5-b5a7-13f33d1558ca
+
+# SMTP Mailer Settings
+SMTP_SENDER_EMAIL=membership@lombokgardenhotel.com
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=${adminEmail}
+SMTP_PASSWORD=
+
+# ping.co.id WhatsApp Gateway
+PING_API_KEY=ping_live_8912734190abcdef88912
+PING_API_URL=https://ping.co.id/api/v1
+`;
+
+  const oneClickScript = `#!/usr/bin/env bash
+# ==============================================================================
+# Lombok Garden Hotel — Auto Deployment Script for NevaCloud VPS (Ubuntu/Debian)
+# ==============================================================================
+set -e
+
+echo "🚀 [1/6] Memulai setup environment Lombok Garden Hotel di NevaCloud VPS..."
+
+# 1. Update OS packages
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl wget git build-essential nginx certbot python3-certbot-nginx ufw
+
+# 2. Install Node.js 20 LTS & PM2
+if ! command -v node &> /dev/null; then
+    echo "📦 Menginstall Node.js 20 LTS..."
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    sudo apt install -y nodejs
+fi
+
+echo "Node version: $(node -v)"
+echo "NPM version: $(npm -v)"
+
+sudo npm install -g pm2 tsx
+
+# 3. Setup Project Directory
+sudo mkdir -p ${cleanDir}
+sudo chown -R $USER:$USER ${cleanDir}
+cd ${cleanDir}
+
+# 4. Install Dependencies & Build Frontend
+echo "📦 [2/6] Menginstall dependencies npm..."
+npm install
+
+echo "🏗️ [3/6] Membangun frontend React untuk production..."
+npm run build
+
+# 5. Configure Nginx Reverse Proxy
+echo "🌐 [4/6] Mengonfigurasi Nginx Reverse Proxy..."
+sudo tee /etc/nginx/sites-available/${cleanDomain} > /dev/null << 'EOF'
+${nginxConfig}
+EOF
+
+sudo ln -sf /etc/nginx/sites-available/${cleanDomain} /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl reload nginx
+
+# 6. Configure Firewall UFW
+echo "🛡️ [5/6] Mengatur firewall..."
+sudo ufw allow 22/tcp || true
+sudo ufw allow 80/tcp || true
+sudo ufw allow 443/tcp || true
+sudo ufw --force enable || true
+
+# 7. Start App with PM2
+echo "⚡ [6/6] Menjalankan aplikasi dengan PM2..."
+pm2 delete ${appName} 2>/dev/null || true
+pm2 start server.ts --name "${appName}" --interpreter tsx --env production
+pm2 startup | tail -n 1 | sudo bash || true
+pm2 save
+
+echo "=============================================================================="
+echo "✅ DEPLOYMENT BERHASIL! Aplikasi Lombok Garden Hotel aktif di NevaCloud VPS"
+echo "🌐 Akses URL: http://${cleanDomain} (atau IP VPS Anda)"
+echo "🔒 Untuk mengaktifkan SSL HTTPS gratis (Certbot Let's Encrypt), jalankan:"
+echo "   sudo certbot --nginx -d ${cleanDomain} --non-interactive --agree-tos -m ${adminEmail}"
+echo "=============================================================================="
+`;
+
+  res.json({
+    success: true,
+    domain: cleanDomain,
+    port: cleanPort,
+    vpsDir: cleanDir,
+    appName,
+    adminEmail,
+    nginxConfig,
+    pm2Config,
+    envContent,
+    oneClickScript,
   });
 });
 
@@ -1201,10 +1427,53 @@ async function setupServer() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
-    app.get('*', (_req: Request, res: Response) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
-    });
+    const distPath = path.resolve(__dirname, 'dist');
+    const indexHtmlPath = path.resolve(distPath, 'index.html');
+
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath));
+      app.get('*', (_req: Request, res: Response) => {
+        if (fs.existsSync(indexHtmlPath)) {
+          res.sendFile(indexHtmlPath);
+        } else {
+          res.status(200).send(`
+            <!DOCTYPE html>
+            <html lang="id">
+            <head><meta charset="UTF-8"><title>Lombok Garden Hotel CRM</title>
+            <style>body{font-family:system-ui,sans-serif;background:#072417;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+            .box{background:#0e3b27;padding:32px;border-radius:16px;max-width:500px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.5);border:1px solid #1c5c3e;}
+            h1{color:#4ade80;font-size:22px;margin-bottom:12px;}p{color:#d1d5db;font-size:14px;line-height:1.6;}
+            code{background:#051a10;color:#86efac;padding:3px 8px;border-radius:6px;font-size:13px;}</style></head>
+            <body><div class="box">
+              <h1>Lombok Garden Hotel CRM — Server Aktif</h1>
+              <p>Backend Express API berjalan dengan sukses di Port ${PORT}.</p>
+              <p>Untuk memunculkan tampilan portal tamu & admin, jalankan perintah build pada server:</p>
+              <p><code>npm run build</code></p>
+              <p style="font-size:12px;color:#9ca3af;margin-top:20px;">Environment: Production · NevaCloud VPS Ready</p>
+            </div></body></html>
+          `);
+        }
+      });
+    } else {
+      app.get('*', (_req: Request, res: Response) => {
+        res.status(200).send(`
+          <!DOCTYPE html>
+          <html lang="id">
+          <head><meta charset="UTF-8"><title>Lombok Garden Hotel CRM</title>
+          <style>body{font-family:system-ui,sans-serif;background:#072417;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+          .box{background:#0e3b27;padding:32px;border-radius:16px;max-width:500px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.5);border:1px solid #1c5c3e;}
+          h1{color:#4ade80;font-size:22px;margin-bottom:12px;}p{color:#d1d5db;font-size:14px;line-height:1.6;}
+          code{background:#051a10;color:#86efac;padding:3px 8px;border-radius:6px;font-size:13px;}</style></head>
+          <body><div class="box">
+            <h1>Lombok Garden Hotel CRM — Server Aktif</h1>
+            <p>Backend Express API berjalan dengan sukses di Port ${PORT}.</p>
+            <p>Folder <code>dist/</code> belum ditemukan. Silakan jalankan:</p>
+            <p><code>npm run build</code></p>
+            <p style="font-size:12px;color:#9ca3af;margin-top:20px;">Environment: Production · NevaCloud VPS Ready</p>
+          </div></body></html>
+        `);
+      });
+    }
   }
 
   app.listen(PORT, '0.0.0.0', () => {

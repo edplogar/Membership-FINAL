@@ -1,0 +1,21 @@
+services:
+  lombok-crm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lombok-garden-crm
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - BASE_URL=https://member.lombokgardenhotel.com
+      - FIREBASE_DATABASE_ID=ai-studio-lombokgardenhote-6c919a5f-b175-40b5-b5a7-13f33d1558ca
+      - SMTP_SENDER_EMAIL=membership@lombokgardenhotel.com
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_SECURE=false
+      - SMTP_USER=edp.logar@gmail.com
+    volumes:
+      - ./logs:/app/logs

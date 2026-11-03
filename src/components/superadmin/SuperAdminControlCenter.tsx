@@ -39,6 +39,7 @@ import {
   Receipt,
   BedDouble,
   ShieldAlert,
+  Server,
 } from 'lucide-react';
 import { Member } from '../../types';
 import { Modal } from '../common/Modal';
@@ -375,7 +376,25 @@ export const SuperAdminControlCenter: React.FC<SuperAdminControlCenterProps> = (
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => onNavigate('super_nevacloud')}
+              className="px-4 py-3 bg-[#00A651]/20 hover:bg-[#00A651]/30 text-white backdrop-blur-md rounded-2xl border border-emerald-400/50 flex items-center gap-3 text-left transition-colors cursor-pointer"
+              title="Buka Pusat Deployment VPS NevaCloud"
+            >
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/30 text-emerald-300 flex items-center justify-center">
+                <Server className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] text-emerald-300 font-medium">Server Host</div>
+                <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Deploy VPS NevaCloud →</span>
+                </div>
+              </div>
+            </button>
+
             <button
               type="button"
               onClick={handleQuickSyncCloud}
@@ -1092,6 +1111,32 @@ export const SuperAdminControlCenter: React.FC<SuperAdminControlCenterProps> = (
             <div className="mt-4 pt-3 border-t border-emerald-800 flex items-center justify-between text-[11px] text-amber-300 font-bold">
               <span>+ Input Member Baru</span>
               <span>Buka Formulir Pendaftaran →</span>
+            </div>
+          </div>
+
+          {/* 0b. Pusat Deploy VPS NevaCloud (Super Admin Suite) */}
+          <div
+            onClick={() => onNavigate('super_nevacloud')}
+            className="p-5 bg-gradient-to-br from-[#051c11] via-[#082a1b] to-stone-900 text-white rounded-2xl border-2 border-emerald-500 shadow-md hover:shadow-lg hover:border-emerald-400 transition-all cursor-pointer group flex flex-col justify-between relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 bg-[#00A651] text-white text-[10px] font-bold px-3 py-0.5 rounded-bl-xl uppercase tracking-wider font-mono">
+              NevaCloud VPS
+            </div>
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform border border-emerald-500/40">
+                <Server className="w-5 h-5 text-emerald-300" />
+              </div>
+              <h3 className="font-bold text-sm text-white group-hover:text-emerald-200 transition-colors flex items-center justify-between">
+                <span>Pusat Deploy VPS NevaCloud</span>
+                <ArrowRight className="w-4 h-4 text-emerald-300 group-hover:translate-x-1 transition-transform" />
+              </h3>
+              <p className="text-xs text-stone-300 mt-1 leading-relaxed">
+                Script 1-perintah deploy otomatis, konfigurasi Nginx reverse proxy, PM2 cluster manager, dan panduan SSL Let's Encrypt tanpa hambatan.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-emerald-800 flex items-center justify-between text-[11px] text-emerald-300 font-bold">
+              <span>Port 3000 · Nginx Ready</span>
+              <span>Buka Menu Deploy →</span>
             </div>
           </div>
 
