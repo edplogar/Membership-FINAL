@@ -1,0 +1,300 @@
+{
+  "entities": {
+    "Member": {
+      "title": "Member",
+      "description": "Hotel loyalty member profile and stats",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "membershipNumber": { "type": "string", "maxLength": 64 },
+        "fullName": { "type": "string", "maxLength": 256 },
+        "nickname": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "phone": { "type": "string", "maxLength": 64 },
+        "gender": { "type": "string", "enum": ["L", "P", "OTHER"] },
+        "birthDate": { "type": "string", "maxLength": 64 },
+        "address": { "type": "string", "maxLength": 512 },
+        "city": { "type": "string", "maxLength": 128 },
+        "province": { "type": "string", "maxLength": 128 },
+        "country": { "type": "string", "maxLength": 128 },
+        "idCardNumber": { "type": "string", "maxLength": 64 },
+        "registrationDate": { "type": "string", "maxLength": 64 },
+        "membershipStartDate": { "type": "string", "maxLength": 64 },
+        "membershipEndDate": { "type": "string", "maxLength": 64 },
+        "tierId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "EXPIRED", "SUSPENDED"] },
+        "totalVisits": { "type": "number" },
+        "totalTransactions": { "type": "number" },
+        "totalSpending": { "type": "number" },
+        "totalPointsEarned": { "type": "number" },
+        "availablePoints": { "type": "number" },
+        "redeemedPoints": { "type": "number" },
+        "lastVisitDate": { "type": "string", "maxLength": 64 },
+        "referralCode": { "type": "string", "maxLength": 64 },
+        "referredBy": { "type": "string", "maxLength": 64 },
+        "internalNotes": { "type": "string", "maxLength": 1024 },
+        "avatar": { "type": "string", "maxLength": 512 }
+      },
+      "required": ["id", "membershipNumber", "fullName", "email", "phone", "tierId", "status"]
+    },
+    "MembershipTier": {
+      "title": "MembershipTier",
+      "description": "Hotel membership loyalty tier configuration",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "level": { "type": "number" },
+        "minSpending": { "type": "number" },
+        "minStays": { "type": "number" },
+        "minNights": { "type": "number" },
+        "pointMultiplier": { "type": "number" },
+        "roomDiscountPercent": { "type": "number" },
+        "fnbDiscountPercent": { "type": "number" },
+        "spaDiscountPercent": { "type": "number" },
+        "colorHex": { "type": "string", "maxLength": 64 },
+        "badgeBg": { "type": "string", "maxLength": 64 },
+        "icon": { "type": "string", "maxLength": 64 },
+        "validityMonths": { "type": "number" },
+        "description": { "type": "string", "maxLength": 512 },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["id", "name", "level", "pointMultiplier", "isActive"]
+    },
+    "Stay": {
+      "title": "Stay",
+      "description": "Hotel room reservation and stay record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "memberId": { "type": "string", "maxLength": 128 },
+        "bookingNumber": { "type": "string", "maxLength": 64 },
+        "roomNumber": { "type": "string", "maxLength": 32 },
+        "roomType": { "type": "string", "maxLength": 128 },
+        "checkInDate": { "type": "string", "maxLength": 64 },
+        "checkOutDate": { "type": "string", "maxLength": 64 },
+        "nights": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "pointsEarned": { "type": "number" },
+        "status": { "type": "string", "enum": ["reserved", "checked_in", "checked_out", "cancelled", "no_show"] },
+        "guestName": { "type": "string", "maxLength": 256 },
+        "notes": { "type": "string", "maxLength": 512 }
+      },
+      "required": ["id", "memberId", "bookingNumber", "roomNumber", "status"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Hotel guest spending transaction record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "transactionNumber": { "type": "string", "maxLength": 64 },
+        "memberId": { "type": "string", "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 64 },
+        "category": { "type": "string", "enum": ["room", "restaurant", "spa", "bar", "laundry", "meeting", "other"] },
+        "outletName": { "type": "string", "maxLength": 128 },
+        "amount": { "type": "number" },
+        "pointsEarned": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 512 }
+      },
+      "required": ["id", "transactionNumber", "memberId", "amount", "pointsEarned"]
+    },
+    "PointTransaction": {
+      "title": "PointTransaction",
+      "description": "Loyalty points earn and burn ledger entry",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "memberId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["EARN", "REDEEM", "ADJUST", "EXPIRE", "BONUS"] },
+        "points": { "type": "number" },
+        "balanceAfter": { "type": "number" },
+        "description": { "type": "string", "maxLength": 512 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "memberId", "type", "points", "balanceAfter"]
+    },
+    "WhatsAppMessageLog": {
+      "title": "WhatsAppMessageLog",
+      "description": "ping.co.id WhatsApp CRM outbound and broadcast log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "recipientPhone": { "type": "string", "maxLength": 64 },
+        "recipientName": { "type": "string", "maxLength": 256 },
+        "message": { "type": "string", "maxLength": 2048 },
+        "type": { "type": "string", "enum": ["welcome", "point_update", "tier_upgrade", "voucher", "broadcast", "chat"] },
+        "status": { "type": "string", "enum": ["sent", "delivered", "read", "failed"] },
+        "timestamp": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "recipientPhone", "recipientName", "message", "type", "status"]
+    },
+    "PingCoIdWhatsAppConfig": {
+      "title": "PingCoIdWhatsAppConfig",
+      "description": "ping.co.id WhatsApp Gateway credentials and settings",
+      "type": "object",
+      "properties": {
+        "apiKey": { "type": "string", "maxLength": 256 },
+        "senderPhone": { "type": "string", "maxLength": 64 },
+        "deviceName": { "type": "string", "maxLength": 128 },
+        "deviceStatus": { "type": "string", "enum": ["connected", "disconnected", "qr_ready"] },
+        "webhookUrl": { "type": "string", "maxLength": 512 },
+        "autoSendWelcomeCard": { "type": "boolean" },
+        "autoSendPointUpdate": { "type": "boolean" },
+        "autoSendTierUpgrade": { "type": "boolean" },
+        "autoSendVouchers": { "type": "boolean" },
+        "messageTemplateWelcome": { "type": "string", "maxLength": 2048 },
+        "messageTemplatePoints": { "type": "string", "maxLength": 2048 },
+        "messageTemplateTierUpgrade": { "type": "string", "maxLength": 2048 }
+      },
+      "required": ["apiKey", "senderPhone", "deviceStatus"]
+    },
+    "Reward": {
+      "title": "Reward",
+      "description": "Loyalty points redeemable reward item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 1024 },
+        "category": { "type": "string", "maxLength": 64 },
+        "pointsRequired": { "type": "number" },
+        "stock": { "type": "number" },
+        "validityDays": { "type": "number" },
+        "terms": { "type": "string", "maxLength": 1024 },
+        "status": { "type": "string", "enum": ["active", "inactive"] }
+      },
+      "required": ["id", "title", "pointsRequired", "status"]
+    },
+    "Voucher": {
+      "title": "Voucher",
+      "description": "Promotional or loyalty discount voucher",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 64 },
+        "title": { "type": "string", "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 1024 },
+        "type": { "type": "string", "enum": ["fixed", "percent", "complimentary"] },
+        "discountValue": { "type": "number" },
+        "minTransaction": { "type": "number" },
+        "maxDiscount": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "inactive", "expired"] }
+      },
+      "required": ["id", "code", "title", "type", "discountValue", "status"]
+    },
+    "PromotionCampaign": {
+      "title": "PromotionCampaign",
+      "description": "Hotel promotional marketing campaign",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 1024 },
+        "startDate": { "type": "string", "maxLength": 64 },
+        "endDate": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "enum": ["active", "upcoming", "ended"] }
+      },
+      "required": ["id", "title", "status"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Super admin, admin staff, and authenticated member users",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "username": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 256 },
+        "role": { "type": "string", "enum": ["MEMBER", "ADMIN", "SUPER_ADMIN"] },
+        "roleId": { "type": "string", "maxLength": 64 },
+        "memberId": { "type": "string", "maxLength": 128 },
+        "avatar": { "type": "string", "maxLength": 1024 },
+        "phone": { "type": "string", "maxLength": 64 },
+        "department": { "type": "string", "maxLength": 128 },
+        "jobTitle": { "type": "string", "maxLength": 128 },
+        "password": { "type": "string", "maxLength": 256 },
+        "notes": { "type": "string", "maxLength": 1024 },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "lastLogin": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "email", "name", "role", "roleId", "isActive"]
+    },
+    "Role": {
+      "title": "Role",
+      "description": "User permission role definition",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "code": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 128 },
+        "description": { "type": "string", "maxLength": 512 },
+        "permissions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "isSystem": { "type": "boolean" }
+      },
+      "required": ["id", "code", "name", "permissions"]
+    }
+  },
+  "firestore": {
+    "/members/{memberId}": {
+      "schema": "Member",
+      "description": "Hotel membership collection"
+    },
+    "/membership_tiers/{tierId}": {
+      "schema": "MembershipTier",
+      "description": "Membership tiers"
+    },
+    "/membership_benefits/{benefitId}": {
+      "schema": "Member",
+      "description": "Membership benefits"
+    },
+    "/membership_rules/{ruleId}": {
+      "schema": "Member",
+      "description": "Dynamic evaluation rules"
+    },
+    "/stays/{stayId}": {
+      "schema": "Stay",
+      "description": "Guest stays and room bookings"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Spending and billing transactions"
+    },
+    "/point_transactions/{pointId}": {
+      "schema": "PointTransaction",
+      "description": "Points ledger"
+    },
+    "/rewards/{rewardId}": {
+      "schema": "Reward",
+      "description": "Redeemable rewards catalog"
+    },
+    "/vouchers/{voucherId}": {
+      "schema": "Voucher",
+      "description": "Vouchers and discount codes"
+    },
+    "/promotions/{promoId}": {
+      "schema": "PromotionCampaign",
+      "description": "Hotel promotional campaigns"
+    },
+    "/whatsapp_logs/{logId}": {
+      "schema": "WhatsAppMessageLog",
+      "description": "Ping.co.id WhatsApp CRM logs"
+    },
+    "/system_settings/{settingId}": {
+      "schema": "PingCoIdWhatsAppConfig",
+      "description": "System and integration settings"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Super admin, hotel admin, and member users"
+    },
+    "/roles/{roleId}": {
+      "schema": "Role",
+      "description": "Security roles and permissions"
+    }
+  }
+}

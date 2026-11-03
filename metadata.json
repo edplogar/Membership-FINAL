@@ -1,0 +1,6 @@
+{
+  "name": "Lombok Garden Hotel Membership",
+  "description": "Hotel Membership Management System for Lombok Garden Hotel featuring dynamic tiers, loyalty points, rewards, QR check-in, and granular role-based access control.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
