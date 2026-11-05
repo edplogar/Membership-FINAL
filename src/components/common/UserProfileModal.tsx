@@ -431,8 +431,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-stone-700 mb-1">
-                        Tanggal Lahir
+                      <label className="block text-xs font-semibold text-stone-700 mb-1 flex items-center justify-between">
+                        <span>Tanggal Lahir *</span>
+                        <span className="text-[10px] text-amber-600 font-normal">🎁 Bonus +300 Poin Ultah</span>
                       </label>
                       <div className="relative">
                         <Calendar className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -440,7 +441,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                           type="date"
                           value={birthDate}
                           onChange={(e) => setBirthDate(e.target.value)}
-                          className="w-full pl-9.5 pr-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#00A651]/20 focus:border-[#00A651] transition-all"
+                          className="w-full pl-9.5 pr-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#00A651]/20 focus:border-[#00A651] transition-all font-mono"
                         />
                       </div>
                     </div>

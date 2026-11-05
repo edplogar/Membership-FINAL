@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatIDR, formatDateIndo } from '../../services/membershipEngine';
 import { DashboardWidget } from './DashboardWidget';
+import { BirthdayNotificationWidget } from './BirthdayNotificationWidget';
 import {
   Users,
   Building2,
@@ -127,6 +128,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           )}
         </div>
       </div>
+
+      {/* Automated Member Birthday Notification & Special Offer System */}
+      <BirthdayNotificationWidget onNavigate={onNavigate} />
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Member, MembershipTier } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -26,7 +26,12 @@ import {
   Trash2,
   KeyRound,
   Download,
+  Cake,
+  Gift,
+  Edit2,
+  Save,
 } from 'lucide-react';
+import { calculateMemberBirthdayInfo } from '../../services/birthdayService';
 
 interface MemberDetailModalProps {
   member: Member | null;
@@ -47,12 +52,41 @@ export const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
   onActionAdjustPoints,
   onActionChangeTier,
 }) => {
-  const { tiers, stays, transactions, pointTransactions, redemptions, deleteMember } = useApp();
+  const { tiers, stays, transactions, pointTransactions, redemptions, deleteMember, updateMember } = useApp();
   const { userRole, resetPasswordWithRecovery, hasPermission } = useAuth();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'profile' | 'stays' | 'spending' | 'loyalty' | 'timeline'>('profile');
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [editProfileForm, setEditProfileForm] = useState({
+    fullName: member?.fullName || '',
+    nickname: member?.nickname || '',
+    phone: member?.phone || '',
+    email: member?.email || '',
+    birthDate: member?.birthDate || '',
+    gender: (member?.gender || 'L') as 'L' | 'P' | 'OTHER',
+    address: member?.address || '',
+    city: member?.city || '',
+    internalNotes: member?.internalNotes || '',
+  });
+
+  useEffect(() => {
+    if (member) {
+      setEditProfileForm({
+        fullName: member.fullName || '',
+        nickname: member.nickname || '',
+        phone: member.phone || '',
+        email: member.email || '',
+        birthDate: member.birthDate || '',
+        gender: (member.gender || 'L') as 'L' | 'P' | 'OTHER',
+        address: member.address || '',
+        city: member.city || '',
+        internalNotes: member.internalNotes || '',
+      });
+    }
+  }, [member]);
+
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -62,6 +96,29 @@ export const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
 
   const currentTier: MembershipTier =
     tiers.find((t) => t.id === member.tierId) || tiers[0];
+
+  const bdayInfo = calculateMemberBirthdayInfo(member);
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editProfileForm.fullName.trim()) {
+      showToast('Nama lengkap wajib diisi.', 'error');
+      return;
+    }
+    updateMember(member.id, {
+      fullName: editProfileForm.fullName.trim(),
+      nickname: editProfileForm.nickname.trim(),
+      phone: editProfileForm.phone.trim(),
+      email: editProfileForm.email.trim(),
+      birthDate: editProfileForm.birthDate,
+      gender: editProfileForm.gender,
+      address: editProfileForm.address.trim(),
+      city: editProfileForm.city.trim(),
+      internalNotes: editProfileForm.internalNotes.trim(),
+    });
+    showToast('Data profil dan tanggal lahir member berhasil diperbarui!', 'success');
+    setIsEditProfileOpen(false);
+  };
 
   const handleDownloadCard = async () => {
     setIsDownloading(true);
@@ -253,9 +310,19 @@ export const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
         {activeTab === 'profile' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-stone-50 p-5 rounded-2xl border border-stone-200 space-y-3 text-xs">
-              <h4 className="font-bold text-stone-900 text-sm uppercase tracking-wider mb-2">
-                Data Pribadi & Identitas
-              </h4>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-bold text-stone-900 text-sm uppercase tracking-wider">
+                  Data Pribadi & Identitas
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(true)}
+                  className="px-2.5 py-1 text-xs font-semibold bg-white hover:bg-stone-100 text-emerald-800 border border-stone-200 rounded-lg flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                >
+                  <Edit2 className="w-3 h-3 text-emerald-700" />
+                  <span>Edit Data Profil</span>
+                </button>
+              </div>
               <div className="flex justify-between py-1.5 border-b border-stone-200/60">
                 <span className="text-stone-500">Nama Lengkap</span>
                 <span className="font-semibold text-stone-900">{member.fullName}</span>
@@ -268,9 +335,42 @@ export const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
                 <span className="text-stone-500">Nomor KTP/Paspor</span>
                 <span className="font-mono text-stone-900">{member.idCardNumber || '-'}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-stone-200/60">
-                <span className="text-stone-500">Tanggal Lahir</span>
-                <span className="font-mono text-stone-900">{formatDateIndo(member.birthDate)}</span>
+              <div className="flex items-start justify-between py-2 border-b border-stone-200/60">
+                <span className="text-stone-500 flex items-center gap-1.5 pt-0.5">
+                  <Cake className="w-3.5 h-3.5 text-amber-600" />
+                  Tanggal Lahir
+                </span>
+                <div className="text-right">
+                  <span className="font-mono font-semibold text-stone-900 block">
+                    {formatDateIndo(member.birthDate)}
+                  </span>
+                  {bdayInfo && (
+                    <>
+                      <div className="text-[11px] text-stone-500 mt-0.5 flex items-center justify-end gap-1.5">
+                        <span>{bdayInfo.age} tahun</span>
+                        <span>•</span>
+                        <span className="text-emerald-700 font-medium">
+                          {bdayInfo.zodiac.symbol} {bdayInfo.zodiac.name}
+                        </span>
+                      </div>
+                      {bdayInfo.isUpcoming && (
+                        <div className="mt-1.5">
+                          {bdayInfo.isToday ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-stone-950 shadow-xs">
+                              <Sparkles className="w-3 h-3 text-stone-950 animate-spin" />
+                              🎉 Ulang Tahun Hari Ini! (Ke-{bdayInfo.turningAge})
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                              <Gift className="w-3 h-3 text-amber-600" />
+                              {bdayInfo.daysUntil} hari lagi (Ke-{bdayInfo.turningAge})
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
               <div className="flex justify-between py-1.5 border-b border-stone-200/60">
                 <span className="text-stone-500">Jenis Kelamin</span>
@@ -647,6 +747,180 @@ export const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
             </button>
           </div>
         </div>
+      </Modal>
+
+      {/* Edit Profile & Birthdate Modal */}
+      <Modal
+        isOpen={isEditProfileOpen}
+        onClose={() => setIsEditProfileOpen(false)}
+        title="Edit Profil & Tanggal Lahir Tamu"
+        subtitle={`Perbarui biodata personal, tanggal lahir, dan kontak ${member.fullName}`}
+        maxWidth="lg"
+      >
+        <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-stone-700 font-semibold mb-1">
+                Nama Lengkap *
+              </label>
+              <input
+                type="text"
+                required
+                value={editProfileForm.fullName}
+                onChange={(e) =>
+                  setEditProfileForm({ ...editProfileForm, fullName: e.target.value })
+                }
+                className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-stone-900 font-medium"
+              />
+            </div>
+            <div>
+              <label className="block text-stone-700 font-semibold mb-1">
+                Nama Panggilan
+              </label>
+              <input
+                type="text"
+                value={editProfileForm.nickname}
+                onChange={(e) =>
+                  setEditProfileForm({ ...editProfileForm, nickname: e.target.value })
+                }
+                className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-stone-900"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-amber-50/60 rounded-xl border border-amber-200">
+            <div>
+              <label className="block text-amber-950 font-bold mb-1 flex items-center gap-1.5">
+                <Cake className="w-3.5 h-3.5 text-amber-700" />
+                <span>Tanggal Lahir *</span>
+              </label>
+              <input
+                type="date"
+                required
+                value={editProfileForm.birthDate}
+                onChange={(e) =>
+                  setEditProfileForm({ ...editProfileForm, birthDate: e.target.value })
+                }
+                className="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-stone-900 font-mono font-medium"
+              />
+              <span className="text-[10px] text-amber-800 block mt-1">
+                Digunakan untuk notifikasi ulang tahun otomatis & penawaran spesial.
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-stone-700 font-semibold mb-1">
+                Jenis Kelamin
+              </label>
+              <select
+                value={editProfileForm.gender}
+                onChange={(e) =>
+                  setEditProfileForm({
+                    ...editProfileForm,
+                    gender: e.target.value as 'L' | 'P' | 'OTHER',
+                  })
+                }
+                className="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-stone-900"
+              >
+                <option value="L">Laki-laki</option>
+                <option value="P">Perempuan</option>
+                <option value="OTHER">Lainnya</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-stone-700 font-semibold mb-1">
+                Nomor Telepon / WhatsApp *
+              </label>
+              <input
+                type="text"
+                required
+                value={editProfileForm.phone}
+                onChange={(e) =>
+                  setEditProfileForm({ ...editProfileForm, phone: e.target.value })
+                }
+                className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-stone-900 font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-stone-700 font-semibold mb-1">
+                Alamat Email *
+              </label>
+              <input
+                type="email"
+                required
+                value={editProfileForm.email}
+                onChange={(e) =>
+                  setEditProfileForm({ ...editProfileForm, email: e.target.value })
+                }
+                className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-stone-900"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-stone-700 font-semibold mb-1">
+                Alamat Domisili
+              </label>
+              <input
+                type="text"
+                value={editProfileForm.address}
+                onChange={(e) =>
+                  setEditProfileForm({ ...editProfileForm, address: e.target.value })
+                }
+                className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-stone-900"
+              />
+            </div>
+            <div>
+              <label className="block text-stone-700 font-semibold mb-1">
+                Kota
+              </label>
+              <input
+                type="text"
+                value={editProfileForm.city}
+                onChange={(e) =>
+                  setEditProfileForm({ ...editProfileForm, city: e.target.value })
+                }
+                className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-stone-900"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-stone-700 font-semibold mb-1">
+              Catatan Internal Staf
+            </label>
+            <textarea
+              rows={2}
+              value={editProfileForm.internalNotes}
+              onChange={(e) =>
+                setEditProfileForm({ ...editProfileForm, internalNotes: e.target.value })
+              }
+              placeholder="Preferensi kamar, alergi makanan, status VIP tamu, dll."
+              className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-stone-900 text-xs"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-stone-200">
+            <button
+              type="button"
+              onClick={() => setIsEditProfileOpen(false)}
+              className="px-4 py-2 text-stone-600 hover:bg-stone-100 rounded-xl font-medium transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-amber-300 font-bold rounded-xl flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Simpan Perubahan</span>
+            </button>
+          </div>
+        </form>
       </Modal>
 
       {/* Delete Member Confirmation Dialog (SUPER ADMIN ONLY) */}

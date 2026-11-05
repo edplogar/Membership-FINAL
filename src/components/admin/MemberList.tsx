@@ -25,7 +25,10 @@ import {
   XCircle,
   KeyRound,
   ArrowUpDown,
+  Cake,
+  Gift,
 } from 'lucide-react';
+import { calculateMemberBirthdayInfo } from '../../services/birthdayService';
 
 interface MemberListProps {
   onSelectMember: (member: Member) => void;
@@ -53,6 +56,7 @@ export const MemberList: React.FC<MemberListProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTier, setSelectedTier] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [birthdayFilter, setBirthdayFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [sortBy, setSortBy] = useState<'spending' | 'points' | 'visits' | 'date'>('spending');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -121,7 +125,21 @@ export const MemberList: React.FC<MemberListProps> = ({
       const matchTier = selectedTier === 'all' || m.tierId === selectedTier;
       const matchStatus = selectedStatus === 'all' || m.status === selectedStatus;
 
-      return matchSearch && matchTier && matchStatus;
+      let matchBirthday = true;
+      if (birthdayFilter !== 'all') {
+        const bday = calculateMemberBirthdayInfo(m);
+        if (!bday) {
+          matchBirthday = false;
+        } else if (birthdayFilter === 'today') {
+          matchBirthday = bday.isToday;
+        } else if (birthdayFilter === 'week') {
+          matchBirthday = bday.daysUntil <= 7;
+        } else if (birthdayFilter === 'month') {
+          matchBirthday = bday.daysUntil <= 30;
+        }
+      }
+
+      return matchSearch && matchTier && matchStatus && matchBirthday;
     })
     .sort((a, b) => {
       let valA = 0;
@@ -319,6 +337,24 @@ export const MemberList: React.FC<MemberListProps> = ({
           </select>
         </div>
 
+        {/* Birthday Filter */}
+        <div className="flex items-center gap-1.5 w-full md:w-auto">
+          <Cake className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+          <select
+            value={birthdayFilter}
+            onChange={(e: any) => {
+              setBirthdayFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-700/20"
+          >
+            <option value="all">Semua Ultah</option>
+            <option value="today">🎂 Hari Ini</option>
+            <option value="week">🎂 7 Hari Mendatang</option>
+            <option value="month">🎂 30 Hari Mendatang</option>
+          </select>
+        </div>
+
         {/* Sort By */}
         <div className="flex items-center gap-2 w-full md:w-auto">
           <button
@@ -365,6 +401,7 @@ export const MemberList: React.FC<MemberListProps> = ({
               <tbody className="divide-y divide-stone-100">
                 {paginatedMembers.map((m) => {
                   const tier = tiers.find((t) => t.id === m.tierId) || tiers[0];
+                  const bday = calculateMemberBirthdayInfo(m);
                   return (
                     <tr key={m.id} className="hover:bg-stone-50/70 transition-colors">
                       <td className="px-5 py-3.5 font-mono font-bold text-stone-800 whitespace-nowrap">
@@ -372,9 +409,43 @@ export const MemberList: React.FC<MemberListProps> = ({
                       </td>
 
                       <td className="px-5 py-3.5">
-                        <div className="font-semibold text-stone-900">{m.fullName}</div>
-                        <div className="text-[11px] text-stone-400 mt-0.5">
-                          {m.phone} · {m.city}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-stone-900">{m.fullName}</span>
+                          {bday && bday.isUpcoming && (
+                            bday.isToday ? (
+                              <span
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-stone-950 shadow-2xs animate-pulse"
+                                title={`Ultah Hari Ini! Genap ${bday.turningAge} tahun`}
+                              >
+                                <Cake className="w-2.5 h-2.5" />
+                                Ultah Hari Ini! ({bday.turningAge} th)
+                              </span>
+                            ) : bday.daysUntil <= 7 ? (
+                              <span
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-900 border border-amber-300"
+                                title={`Ultah dalam ${bday.daysUntil} hari (${bday.formattedBirthday})`}
+                              >
+                                <Cake className="w-2.5 h-2.5 text-amber-600" />
+                                {bday.daysUntil} hr lagi
+                              </span>
+                            ) : (
+                              <span
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-stone-100 text-stone-700 border border-stone-200"
+                                title={`Ultah dalam ${bday.daysUntil} hari (${bday.formattedBirthday})`}
+                              >
+                                <Cake className="w-2.5 h-2.5 text-stone-500" />
+                                {bday.daysUntil} hr
+                              </span>
+                            )
+                          )}
+                        </div>
+                        <div className="text-[11px] text-stone-400 mt-0.5 flex items-center gap-2">
+                          <span>{m.phone} · {m.city}</span>
+                          {m.birthDate && (
+                            <span className="text-[10px] text-stone-400">
+                              (Lahir: {formatDateIndo(m.birthDate)})
+                            </span>
+                          )}
                         </div>
                       </td>
 

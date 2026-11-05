@@ -45,7 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     (n) =>
       n.recipientUserId === currentUser?.id ||
       n.recipientUserId === currentUser?.memberId ||
-      (userRole !== 'MEMBER' && (n.type === 'system' || n.recipientUserId === 'usr_admin'))
+      (userRole !== 'MEMBER' && (n.type === 'system' || n.type === 'birthday' || n.recipientUserId === 'usr_admin' || n.recipientUserId === 'usr_superadmin'))
   );
   const unreadCount = userNotifs.filter((n) => !n.isRead).length;
 

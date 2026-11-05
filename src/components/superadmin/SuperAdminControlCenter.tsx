@@ -60,6 +60,7 @@ import {
 } from '../../services/pingWhatsAppService';
 import { QRCodeView } from '../common/QRCodeView';
 import { DashboardWidget } from '../admin/DashboardWidget';
+import { BirthdayNotificationWidget } from '../admin/BirthdayNotificationWidget';
 
 interface SuperAdminControlCenterProps {
   onNavigate: (tab: string) => void;
@@ -1073,6 +1074,9 @@ export const SuperAdminControlCenter: React.FC<SuperAdminControlCenterProps> = (
           </div>
         </div>
       </div>
+
+      {/* Automated Member Birthday Notification & Special Offer System */}
+      <BirthdayNotificationWidget onNavigate={onNavigate} />
 
       {/* Daily Active Members & New Sign-ups Chart Widget */}
       <DashboardWidget
