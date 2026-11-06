@@ -119,15 +119,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       unsubMembers = onSnapshot(
         collection(db, 'members'),
         (snapshot) => {
-          if (!snapshot.empty) {
-            const list: Member[] = [];
-            snapshot.forEach((docSnap) => {
-              const m = docSnap.data() as Member;
-              if (m && m.id) list.push(m);
-            });
-            setMembers(list);
-            saveToStorage('members', list);
-          }
+          const list: Member[] = [];
+          snapshot.forEach((docSnap) => {
+            const m = docSnap.data() as Member;
+            if (m && m.id) list.push(m);
+          });
+          setMembers(list);
+          saveToStorage('members', list);
         },
         (error) => {
           console.warn('[AUTH FIREBASE] members onSnapshot notice:', error);

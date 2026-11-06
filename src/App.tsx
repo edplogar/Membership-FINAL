@@ -38,7 +38,6 @@ import { RolePermissionsMatrix } from './components/superadmin/RolePermissionsMa
 import { SystemSettingsView } from './components/superadmin/SystemSettingsView';
 import { WhatsAppCRMHub } from './components/superadmin/WhatsAppCRMHub';
 import { EmailSystemHub } from './components/superadmin/EmailSystemHub';
-import { NevaCloudDeploymentHub } from './components/superadmin/NevaCloudDeploymentHub';
 
 // Modals & Auth
 import { GlobalSearchModal } from './components/common/GlobalSearchModal';
@@ -74,7 +73,6 @@ function MainApp() {
     if (tab === 'super_whatsapp') return hasPermission('settings.view');
     if (tab === 'super_email') return hasPermission('settings.view');
     if (tab === 'super_settings') return hasPermission('settings.view') || hasPermission('settings.edit');
-    if (tab === 'super_nevacloud') return hasPermission('settings.view') || hasPermission('security.manage');
     return false;
   };
 
@@ -283,7 +281,6 @@ function MainApp() {
             {activeTab === 'super_whatsapp' && <WhatsAppCRMHub />}
             {activeTab === 'super_email' && <EmailSystemHub onNavigate={setActiveTab} />}
             {activeTab === 'super_settings' && <SystemSettingsView onNavigate={setActiveTab} />}
-            {activeTab === 'super_nevacloud' && <NevaCloudDeploymentHub />}
             {activeTab === 'admin_reports' && <ReportsView />}
             {activeTab === 'admin_audit' && <AuditLogsView />}
           </>

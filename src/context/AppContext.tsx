@@ -100,6 +100,7 @@ import {
 import {
   seedFirestoreIfEmpty,
   pushAllToFirestore,
+  clearFirestoreMembersAndTransactions,
 } from '../services/dbSyncService';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
@@ -304,6 +305,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         console.log('[FIRESTORE INIT] Initial hotel collections seeded to cloud.');
       }
     }).catch(() => {});
+
+    // Ensure remote Firestore member & transaction records are purged once
+    const purgeFlagKey = 'lgh_purge_members_and_txs_v4';
+    if (!localStorage.getItem(purgeFlagKey)) {
+      clearFirestoreMembersAndTransactions()
+        .then(() => {
+          localStorage.setItem(purgeFlagKey, 'true');
+        })
+        .catch(() => {});
+    }
   }, []);
 
   // Sync to localStorage
@@ -343,11 +354,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const unsubMembers = onSnapshot(
         collection(db, 'members'),
         (snapshot) => {
-          if (!snapshot.empty) {
-            const list: Member[] = [];
-            snapshot.forEach((docSnap) => list.push(docSnap.data() as Member));
-            setMembers(list);
-          }
+          const list: Member[] = [];
+          snapshot.forEach((docSnap) => list.push(docSnap.data() as Member));
+          setMembers(list);
         },
         (error) => handleFirestoreError(error, OperationType.GET, 'members')
       );
@@ -355,11 +364,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const unsubStays = onSnapshot(
         collection(db, 'stays'),
         (snapshot) => {
-          if (!snapshot.empty) {
-            const list: Stay[] = [];
-            snapshot.forEach((docSnap) => list.push(docSnap.data() as Stay));
-            setStays(list);
-          }
+          const list: Stay[] = [];
+          snapshot.forEach((docSnap) => list.push(docSnap.data() as Stay));
+          setStays(list);
         },
         (error) => handleFirestoreError(error, OperationType.GET, 'stays')
       );
@@ -367,11 +374,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const unsubTxs = onSnapshot(
         collection(db, 'transactions'),
         (snapshot) => {
-          if (!snapshot.empty) {
-            const list: Transaction[] = [];
-            snapshot.forEach((docSnap) => list.push(docSnap.data() as Transaction));
-            setTransactions(list);
-          }
+          const list: Transaction[] = [];
+          snapshot.forEach((docSnap) => list.push(docSnap.data() as Transaction));
+          setTransactions(list);
         },
         (error) => handleFirestoreError(error, OperationType.GET, 'transactions')
       );
@@ -379,11 +384,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const unsubPointTxs = onSnapshot(
         collection(db, 'point_transactions'),
         (snapshot) => {
-          if (!snapshot.empty) {
-            const list: PointTransaction[] = [];
-            snapshot.forEach((docSnap) => list.push(docSnap.data() as PointTransaction));
-            setPointTransactions(list);
-          }
+          const list: PointTransaction[] = [];
+          snapshot.forEach((docSnap) => list.push(docSnap.data() as PointTransaction));
+          setPointTransactions(list);
         },
         (error) => handleFirestoreError(error, OperationType.GET, 'point_transactions')
       );
@@ -1904,11 +1907,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Reset Data Granular & Total
   const resetMembersData = () => {
-    setMembers(INITIAL_MEMBERS);
-    setPointTransactions(INITIAL_POINT_TXS);
-    setRedemptions(INITIAL_REDEMPTIONS);
+    setMembers([]);
+    setPointTransactions([]);
+    setRedemptions([]);
     setVoucherRedemptions([]);
-    showToast('Database data member berhasil direset ke data awal.', 'info');
+    saveToStorage('members', []);
+    saveToStorage('pointTransactions', []);
+    saveToStorage('redemptions', []);
+    saveToStorage('voucherRedemptions', []);
+    clearFirestoreMembersAndTransactions().catch(() => {});
+    showToast('Database data member dan poin berhasil direset.', 'info');
   };
 
   const resetTransactionsData = () => {
@@ -1917,18 +1925,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPointTransactions([]);
     setRedemptions([]);
     setVoucherRedemptions([]);
-    // Also reset spending/points counters on existing members
+    saveToStorage('transactions', []);
+    saveToStorage('stays', []);
+    saveToStorage('pointTransactions', []);
+    saveToStorage('redemptions', []);
+    saveToStorage('voucherRedemptions', []);
+    // Also reset spending/points counters on existing members if any
     setMembers((prev) =>
       prev.map((m) => ({
         ...m,
         totalSpending: 0,
         totalVisits: 0,
         totalTransactions: 0,
-        availablePoints: 100,
-        totalPointsEarned: 100,
+        availablePoints: 0,
+        totalPointsEarned: 0,
         redeemedPoints: 0,
       }))
     );
+    clearFirestoreMembersAndTransactions().catch(() => {});
     showToast('Seluruh riwayat transaksi, stay, dan poin belanja berhasil dibersihkan.', 'info');
   };
 

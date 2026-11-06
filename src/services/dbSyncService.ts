@@ -62,69 +62,49 @@ export async function seedFirestoreIfEmpty(): Promise<{ seeded: boolean; counts:
   const counts: Record<string, number> = {};
 
   try {
-    const membersSnap = await getDocs(collection(db, 'members'));
-    counts.members = membersSnap.size;
+    const tiersSnap = await getDocs(collection(db, 'membership_tiers'));
+    counts.tiers = tiersSnap.size;
 
     let didSeed = false;
 
-    if (membersSnap.empty) {
-      console.log('[FIRESTORE SEED] Cloud database empty, seeding initial records...');
+    if (tiersSnap.empty) {
+      console.log('[FIRESTORE SEED] Cloud database empty, seeding core system configuration...');
       const batch = writeBatch(db);
 
-      // 1. Members
-      INITIAL_MEMBERS.forEach((m) => {
-        batch.set(doc(db, 'members', m.id), cleanFirestoreData(m));
-      });
-
-      // 2. Tiers
+      // 1. Tiers
       INITIAL_TIERS.forEach((t) => {
         batch.set(doc(db, 'membership_tiers', t.id), cleanFirestoreData(t));
       });
 
-      // 3. Benefits
+      // 2. Benefits
       INITIAL_BENEFITS.forEach((b) => {
         batch.set(doc(db, 'membership_benefits', b.id), cleanFirestoreData(b));
       });
 
-      // 4. Rules
+      // 3. Rules
       INITIAL_RULES.forEach((r) => {
         batch.set(doc(db, 'membership_rules', r.id), cleanFirestoreData(r));
       });
 
-      // 5. Stays
-      INITIAL_STAYS.forEach((s) => {
-        batch.set(doc(db, 'stays', s.id), cleanFirestoreData(s));
-      });
-
-      // 6. Transactions
-      INITIAL_TRANSACTIONS.forEach((tx) => {
-        batch.set(doc(db, 'transactions', tx.id), cleanFirestoreData(tx));
-      });
-
-      // 7. Point Transactions
-      INITIAL_POINT_TXS.forEach((ptx) => {
-        batch.set(doc(db, 'point_transactions', ptx.id), cleanFirestoreData(ptx));
-      });
-
-      // 8. Rewards
+      // 4. Rewards
       INITIAL_REWARDS.forEach((rew) => {
         batch.set(doc(db, 'rewards', rew.id), cleanFirestoreData(rew));
       });
 
-      // 9. Vouchers
+      // 5. Vouchers
       INITIAL_VOUCHERS.forEach((vch) => {
         batch.set(doc(db, 'vouchers', vch.id), cleanFirestoreData(vch));
       });
 
-      // 10. Promotions
+      // 6. Promotions
       INITIAL_PROMOTIONS.forEach((p) => {
         batch.set(doc(db, 'promotions', p.id), cleanFirestoreData(p));
       });
 
-      // 11. System Settings
+      // 7. System Settings
       batch.set(doc(db, 'system_settings', 'hotel_settings'), cleanFirestoreData(INITIAL_SETTINGS));
 
-      // 12. Users & Roles
+      // 8. Users & Roles
       INITIAL_USERS.forEach((u) => {
         batch.set(doc(db, 'users', u.id), cleanFirestoreData(u));
       });
@@ -134,7 +114,7 @@ export async function seedFirestoreIfEmpty(): Promise<{ seeded: boolean; counts:
 
       await batch.commit();
       didSeed = true;
-      console.log('[FIRESTORE SEED] Cloud database successfully populated with initial dataset.');
+      console.log('[FIRESTORE SEED] Cloud database successfully populated with system configuration.');
     }
 
     // Verify users collection specifically: if empty, seed users & roles
@@ -285,3 +265,40 @@ export async function measureFirestoreLatency(): Promise<{ connected: boolean; l
     }
   }
 }
+
+/**
+ * Completely purge member records, stays, transactions, points, and redemptions from Firestore
+ */
+export async function clearFirestoreMembersAndTransactions(): Promise<{ success: boolean; deletedCount: number; error?: string }> {
+  try {
+    const collectionsToClear = [
+      'members',
+      'stays',
+      'transactions',
+      'point_transactions',
+      'voucher_redemptions',
+      'reward_redemptions',
+    ];
+
+    let totalDeleted = 0;
+    for (const colName of collectionsToClear) {
+      const snap = await getDocs(collection(db, colName));
+      if (!snap.empty) {
+        const batch = writeBatch(db);
+        snap.forEach((docSnap) => {
+          batch.delete(docSnap.ref);
+          totalDeleted++;
+        });
+        await batch.commit();
+      }
+    }
+
+    console.log(`[FIRESTORE RESET] Purged ${totalDeleted} member & transaction documents from cloud Firestore.`);
+    return { success: true, deletedCount: totalDeleted };
+  } catch (err: unknown) {
+    const errorText = err instanceof Error ? err.message : String(err);
+    console.warn('[FIRESTORE RESET ERROR]', errorText);
+    return { success: false, deletedCount: 0, error: errorText };
+  }
+}
+

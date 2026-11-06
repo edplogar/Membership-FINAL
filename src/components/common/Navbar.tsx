@@ -138,12 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       links.push({ id: 'super_admins', label: 'Hak Akses & Admin' });
     }
 
-    // 12. Deploy VPS NevaCloud (Super Admin only or security.manage)
-    if (userRole === 'SUPER_ADMIN' || hasPermission('security.manage') || hasPermission('settings.view')) {
-      links.push({ id: 'super_nevacloud', label: 'Deploy VPS NevaCloud' });
-    }
-
-    // 13. Audit Logs
+    // 12. Audit Logs
     if (hasPermission('audit.view')) {
       links.push({ id: 'admin_audit', label: 'Audit Log' });
     }

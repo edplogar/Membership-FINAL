@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { MEMBER_CUSTOM_DOMAIN, FIRESTORE_DATABASE_ID } from '../../services/domainService';
-import { Save, Building2, Shield, Globe, Cpu, Bell, Check, Server, ArrowRight } from 'lucide-react';
+import { Save, Building2, Shield, Globe, Cpu, Bell, Check } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 
 interface SystemSettingsViewProps {
@@ -88,30 +88,6 @@ export const SystemSettingsView: React.FC<SystemSettingsViewProps> = ({ onNaviga
               <span className="text-[10px] text-emerald-300/80 block">Notifikasi & aksi sync aktif khusus di menu Control Center</span>
             </div>
           </div>
-
-          {onNavigate && (
-            <div className="mt-4 pt-3 border-t border-emerald-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-black/30 p-3.5 rounded-xl border border-emerald-500/30">
-              <div className="flex items-center gap-2.5">
-                <Server className="w-4 h-4 text-emerald-400" />
-                <div>
-                  <span className="text-xs font-bold text-white block">
-                    Deployment NevaCloud VPS (Ubuntu/Debian)
-                  </span>
-                  <span className="text-[10px] text-emerald-300/80 block">
-                    Script installer otomatis, konfigurasi Nginx reverse proxy, dan PM2 cluster manager.
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => onNavigate('super_nevacloud')}
-                className="px-3.5 py-1.5 bg-[#00A651] hover:bg-emerald-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0"
-              >
-                <span>Buka Pusat Deploy VPS</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Section 1: Hotel Property Identity */}
